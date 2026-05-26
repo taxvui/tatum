@@ -33,12 +33,15 @@ const CHAIN_API_NAMES: Record<string, string> = {
   polygon: "polygon"
 };
 
-// Diagnostics Endpoint: Test if an API key is valid using /v3/bitcoin/info (or ethereum/info, bsc/info)
+// Diagnostics Endpoint: Test if an API key is valid using /v3/bitcoin/info (or ethereum/info as fallback)
 app.post("/api/tatum/test-key", async (req, res) => {
   const { network, customApiKey } = req.body;
   const apiKey = getApiKey(network, customApiKey);
 
+  console.log(`[TATUM TEST-KEY] Testing key on network: ${network}`);
+  
   try {
+    // 1st attempt: Bitcoin info
     const response = await fetch("https://api.tatum.io/v3/bitcoin/info", {
       method: "GET",
       headers: {
@@ -48,17 +51,53 @@ app.post("/api/tatum/test-key", async (req, res) => {
 
     if (response.ok) {
       const data = await response.json();
+      console.log(`[TATUM TEST-KEY] Success (Bitcoin info)`);
       return res.json({ success: true, message: "API key is valid and working!", testChain: "Bitcoin", data });
-    } else {
+    }
+
+    // If 1st attempt fails, let's look at the error. If it's a 403 or 401, the key is invalid immediately.
+    if (response.status === 401 || response.status === 403) {
       const errText = await response.text();
       let parsedError = errText;
       try {
         const parsed = JSON.parse(errText);
         parsedError = parsed.message || parsed.error || errText;
       } catch (e) {}
-      return res.status(response.status).json({ success: false, error: parsedError });
+      console.warn(`[TATUM TEST-KEY] Unauthorized/Forbidden (Status ${response.status}): ${parsedError}`);
+      return res.status(response.status).json({ success: false, error: `API Key không lệ hoặc đã hết hạn: ${parsedError}` });
     }
+
+    // 2nd attempt: If it returned 404 (maybe bitcoin is disabled or not found), try Ethereum info
+    console.log(`[TATUM TEST-KEY] Bitcoin info returned ${response.status}. Trying Ethereum info as fallback...`);
+    const ethResponse = await fetch("https://api.tatum.io/v3/ethereum/info", {
+      method: "GET",
+      headers: {
+        "x-api-key": apiKey
+      }
+    });
+
+    if (ethResponse.ok) {
+      const data = await ethResponse.json();
+      console.log(`[TATUM TEST-KEY] Success (Ethereum info)`);
+      return res.json({ success: true, message: "API key is valid and working!", testChain: "Ethereum", data });
+    }
+
+    // If both failed, parse general error response
+    const errText = await ethResponse.text();
+    let parsedError = errText;
+    try {
+      const parsed = JSON.parse(errText);
+      parsedError = parsed.message || parsed.error || errText;
+    } catch (e) {}
+
+    console.warn(`[TATUM TEST-KEY] Fallback failed (Status ${ethResponse.status}): ${parsedError}`);
+    return res.status(ethResponse.status).json({ 
+      success: false, 
+      error: parsedError || `Không thể kiểm tra API key. Cả Bitcoin (status ${response.status}) và Ethereum (status ${ethResponse.status}) đều thất bại.`
+    });
+
   } catch (error: any) {
+    console.error("[TATUM TEST-KEY] Catch block error:", error);
     return res.status(500).json({ success: false, error: error.message || "Unknown error connecting to Tatum" });
   }
 });
