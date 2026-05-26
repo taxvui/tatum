@@ -134,7 +134,7 @@ function getSimulatedKeysAndAddress(chain: string, mnemonic: string, index: numb
 
 // Diagnostics Endpoint: Test if an API key is valid using /v3/bitcoin/info (or ethereum/info as fallback)
 app.post("/api/tatum/test-key", async (req, res) => {
-  const { network, customApiKey } = req.body;
+  const { network, customApiKey } = req.body || {};
   const apiKey = getApiKey(network, customApiKey);
 
   console.log(`[TATUM TEST-KEY] Testing key on network: ${network}`);
@@ -224,7 +224,7 @@ app.post("/api/tatum/test-key", async (req, res) => {
 
 // Endpoint to generate a new HD Wallet or direct Solana/Cardano wallet
 app.post("/api/tatum/wallet", async (req, res) => {
-  const { chain, network, customApiKey } = req.body;
+  const { chain, network, customApiKey } = req.body || {};
   if (!chain) {
     return res.status(400).json({ error: "Chain is required" });
   }
@@ -291,7 +291,7 @@ app.post("/api/tatum/wallet", async (req, res) => {
 
 // Endpoint to derive an address from an xpub
 app.post("/api/tatum/address", async (req, res) => {
-  const { chain, network, xpub, index, customApiKey } = req.body;
+  const { chain, network, xpub, index, customApiKey } = req.body || {};
   if (!chain || !xpub || index === undefined) {
     return res.status(400).json({ error: "Chain, xpub, and index are required" });
   }
@@ -331,7 +331,7 @@ app.post("/api/tatum/address", async (req, res) => {
 
 // Endpoint to derive a private key from client-provided or newly generated mnemonic
 app.post("/api/tatum/private-key", async (req, res) => {
-  const { chain, network, mnemonic, index, customApiKey } = req.body;
+  const { chain, network, mnemonic, index, customApiKey } = req.body || {};
   if (!chain || !mnemonic || index === undefined) {
     return res.status(400).json({ error: "Chain, mnemonic, and index are required" });
   }
@@ -551,18 +551,39 @@ app.get("/api/cmc/global", async (req, res) => {
   }
 });
 
-// Setup production serving hooks (only active when running as a standalone server, NOT on Vercel)
-if (!process.env.VERCEL) {
-  const distPath = path.join(process.cwd(), "dist");
-  app.use(express.static(distPath));
-  
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
+// Setup unified bootstrap and serving hooks depending on the environment
+async function bootstrap() {
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[SERVER] Khởi động Vite Development Server...");
+    const { createServer: createViteServer } = await import("vite");
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    console.log("[SERVER] Khởi động Production Static Server...");
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api/")) {
+        return next();
+      }
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Production Server running on port ${PORT}`);
-  });
+  // Only bind port when not deploying on Vercel serverless platform
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Production Server running on port ${PORT}`);
+    });
+  }
 }
+
+bootstrap().catch((err) => {
+  console.error("Lỗi khởi động máy chủ bootstrap:", err);
+});
 
 export default app;
