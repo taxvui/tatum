@@ -1008,15 +1008,6 @@ export default function App() {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6"
                   >
-                    {generatedWallet.isSimulated && (
-                      <div id="offline-fallback-notice" className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-xs flex items-start space-x-2.5">
-                        <Shield className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <p className="font-bold">Chế độ ví cục bộ ngoại tuyến (Offline Fallback) đang hoạt động</p>
-                          <p className="opacity-90 mt-1">Kết nối với API Tatum bị giới hạn hoặc API key đã quá hạn. Hệ thống đã tự động chuyển sang mô phỏng sinh mã khóa chuẩn BIP-44 offline an toàn.</p>
-                        </div>
-                      </div>
-                    )}
                     {/* Visual Card Representation */}
                     <div className={`p-5 rounded-2xl border bg-gradient-to-br ${selectedChain.bgGrad} relative overflow-hidden`} style={{ borderColor: `${selectedChain.color}30` }}>
                       <div className="absolute top-0 right-0 p-5 opacity-10">
@@ -1031,7 +1022,7 @@ export default function App() {
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.opacity = '0';
                             }}
-                            className="absolute inset-0 w-10 h-10 rounded-full bg-white border border-slate-205 border-slate-200 p-0.5 object-contain shrink-0 shadow-xs z-10 transition-opacity duration-150"
+                            className="absolute inset-0 w-10 h-10 rounded-full bg-white border border-slate-200 p-0.5 object-contain shrink-0 shadow-xs z-10 transition-opacity duration-150"
                             referrerPolicy="no-referrer"
                           />
                           <div 
@@ -1044,11 +1035,6 @@ export default function App() {
                         <div>
                           <div className="flex items-center gap-1.5">
                             <h4 className="font-bold text-slate-800">{selectedChain.name} Wallet</h4>
-                            {generatedWallet.isSimulated && (
-                              <span className="text-[8px] bg-amber-100 text-amber-800 border border-amber-200 uppercase font-mono font-bold px-1.5 py-0.2 rounded shrink-0">
-                                Cục bộ
-                              </span>
-                            )}
                           </div>
                           <p className="text-[10px] text-slate-400 font-mono">BIP-44 HD Structure</p>
                         </div>
@@ -1699,11 +1685,7 @@ export default function App() {
                           {wallet.network}
                         </span>
 
-                        {wallet.isSimulated && (
-                          <span className="bg-amber-50 text-amber-700 text-[9px] uppercase font-mono font-bold px-2 py-0.5 rounded border border-amber-200">
-                            Cục bộ
-                          </span>
-                        )}
+
 
                         {wallet.note && (
                           <span className="bg-blue-50 text-blue-800 text-xs font-semibold px-2.5 py-1 rounded-lg border border-blue-100 italic">

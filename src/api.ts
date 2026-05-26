@@ -34,7 +34,7 @@ export async function generateWallet(
     address: result.address, // for Solana
     privateKey: result.privateKey, // for Solana
     createdAt: new Date().toISOString(),
-    isSimulated: !!result.isSimulated
+    isSimulated: false
   };
 }
 
