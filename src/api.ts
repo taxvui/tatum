@@ -33,7 +33,8 @@ export async function generateWallet(
     xpub: result.xpub,
     address: result.address, // for Solana
     privateKey: result.privateKey, // for Solana
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    isSimulated: !!result.isSimulated
   };
 }
 

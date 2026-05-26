@@ -8,12 +8,14 @@ export interface WalletData {
   privateKey?: string; // Solana directly
   createdAt: string;
   note?: string;
+  isSimulated?: boolean;
 }
 
 export interface DerivedKeypair {
   index: number;
   address: string;
   privateKey?: string;
+  isSimulated?: boolean;
 }
 
 export interface ChainConfig {
