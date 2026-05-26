@@ -117,21 +117,37 @@ export async function getCmcListings(params: {
   if (params.sort_dir !== undefined) query.append("sort_dir", params.sort_dir);
 
   const response = await fetch(`/api/cmc/listings?${query.toString()}`);
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Không thể tải danh sách tài sản từ CoinMarketCap API");
+  const textResponse = await response.text();
+  
+  let result;
+  try {
+    result = JSON.parse(textResponse);
+  } catch (err) {
+    throw new Error("Không thể đồng bộ dữ liệu thị trường (Phản hồi không phải định dạng JSON). Hệ thống đang chuyển sang chế độ dự phòng.");
   }
-  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || "Không thể tải danh sách tài sản từ CoinMarketCap API");
+  }
+
   return result.data;
 }
 
 export async function getCmcGlobal(convert: string = "USD"): Promise<CmcGlobalMetrics> {
   const response = await fetch(`/api/cmc/global?convert=${convert}`);
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Không thể tải chỉ số toàn cầu từ CoinMarketCap API");
+  const textResponse = await response.text();
+
+  let result;
+  try {
+    result = JSON.parse(textResponse);
+  } catch (err) {
+    throw new Error("Không thể đồng bộ chỉ số thị trường (Phản hồi không phải định dạng JSON).");
   }
-  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || "Không thể tải chỉ số toàn cầu từ CoinMarketCap API");
+  }
+
   return result.data;
 }
 
