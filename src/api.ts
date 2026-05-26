@@ -13,12 +13,18 @@ export async function generateWallet(
     body: JSON.stringify({ chain, network, customApiKey })
   });
 
-  if (!response.ok) {
-    const data = await response.json();
-    throw new Error(data.error || `Lỗi tạo ví: Status ${response.status}`);
+  const textResponse = await response.text();
+  let result;
+  try {
+    result = JSON.parse(textResponse);
+  } catch (err) {
+    throw new Error(`Phản hồi lỗi định dạng JSON từ hệ thống (Mã lỗi ${response.status}). Vui lòng nhập lại API Key Tatum hợp lệ.`);
   }
 
-  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error || `Lỗi tạo ví: Status ${response.status}`);
+  }
+
   return {
     id: `${chain}-${network}-${Date.now()}`,
     chain,
@@ -46,12 +52,18 @@ export async function deriveAddress(
     body: JSON.stringify({ chain, network, xpub, index, customApiKey })
   });
 
-  if (!response.ok) {
-    const data = await response.json();
-    throw new Error(data.error || `Lỗi xuất địa chỉ: Status ${response.status}`);
+  const textResponse = await response.text();
+  let result;
+  try {
+    result = JSON.parse(textResponse);
+  } catch (err) {
+    throw new Error(`Phản hồi lỗi định dạng JSON từ hệ thống khi xuất địa chỉ (Mã lỗi ${response.status}).`);
   }
 
-  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error || `Lỗi xuất địa chỉ: Status ${response.status}`);
+  }
+
   return result.address;
 }
 
@@ -70,12 +82,18 @@ export async function derivePrivateKey(
     body: JSON.stringify({ chain, network, mnemonic, index, customApiKey })
   });
 
-  if (!response.ok) {
-    const data = await response.json();
-    throw new Error(data.error || `Lỗi xuất khóa riêng: Status ${response.status}`);
+  const textResponse = await response.text();
+  let result;
+  try {
+    result = JSON.parse(textResponse);
+  } catch (err) {
+    throw new Error(`Phản hồi lỗi định dạng JSON từ hệ thống khi xuất khóa riêng (Mã lỗi ${response.status}).`);
   }
 
-  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.error || `Lỗi xuất khóa riêng: Status ${response.status}`);
+  }
+
   return result.key;
 }
 
@@ -92,9 +110,20 @@ export async function testApiKey(
       body: JSON.stringify({ network, customApiKey })
     });
 
-    const result = await response.json();
+    const textResponse = await response.text();
+    let result;
+    try {
+      result = JSON.parse(textResponse);
+    } catch (err) {
+      return { 
+        success: false, 
+        message: "Kiểm tra thất bại", 
+        error: `Phản hồi lỗi định dạng từ máy chủ (Mã trạng thái ${response.status}). API Key có thể đã bị chặn, không tồn tại hoặc không chính xác.` 
+      };
+    }
+
     if (!response.ok) {
-      return { success: false, message: "Kiểm tra thất bại", error: result.error };
+      return { success: false, message: "Kiểm tra thất bại", error: result.error || `Trạng thái: ${response.status}` };
     }
     return { success: true, message: result.message };
   } catch (error: any) {
