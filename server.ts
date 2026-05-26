@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -504,7 +503,7 @@ app.get("/api/cmc/listings", async (req, res) => {
       return res.json({ data: simulatedListings, isSimulated: true });
     }
 
-    const errorText = await response.clone().text();
+    const errorText = await response.text();
     try {
       const data = JSON.parse(errorText);
       return res.json(data);
@@ -538,7 +537,7 @@ app.get("/api/cmc/global", async (req, res) => {
       return res.json({ data: MOCK_GLOBAL_METRICS, isSimulated: true });
     }
 
-    const text = await response.clone().text();
+    const text = await response.text();
     try {
       const data = JSON.parse(text);
       return res.json(data);
@@ -559,6 +558,7 @@ async function startServer() {
   }
 
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
