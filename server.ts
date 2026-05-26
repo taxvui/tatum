@@ -551,35 +551,18 @@ app.get("/api/cmc/global", async (req, res) => {
   }
 });
 
-// Setup development & production server hooks
-async function startServer() {
-  if (process.env.DISABLE_HMR === "true") {
-    console.log("HMR disabled. Standard non-Vite rendering or SSR-friendly serving enabled.");
-  }
+// Setup production serving hooks (only active when running as a standalone server, NOT on Vercel)
+if (!process.env.VERCEL) {
+  const distPath = path.join(process.cwd(), "dist");
+  app.use(express.static(distPath));
+  
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
 
-  if (process.env.NODE_ENV !== "production") {
-    const { createServer: createViteServer } = await import("vite");
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else if (!process.env.VERCEL) {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
-
-  // Prevent app.listen from blocking when deployed as a Serverless Function on Vercel
-  if (!process.env.VERCEL) {
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  }
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Production Server running on port ${PORT}`);
+  });
 }
-
-startServer();
 
 export default app;
