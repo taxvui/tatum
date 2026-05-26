@@ -553,6 +553,11 @@ app.get("/api/cmc/global", async (req, res) => {
 
 // Setup unified bootstrap and serving hooks depending on the environment
 async function bootstrap() {
+  if (process.env.VERCEL) {
+    console.log("[SERVER] Chạy trên môi trường Vercel Serverless Function, bỏ qua cấu hình static server.");
+    return;
+  }
+
   if (process.env.NODE_ENV !== "production") {
     console.log("[SERVER] Khởi động Vite Development Server...");
     const { createServer: createViteServer } = await import("vite");
@@ -575,11 +580,9 @@ async function bootstrap() {
   }
 
   // Only bind port when not deploying on Vercel serverless platform
-  if (!process.env.VERCEL) {
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Production Server running on port ${PORT}`);
-    });
-  }
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Production Server running on port ${PORT}`);
+  });
 }
 
 bootstrap().catch((err) => {
