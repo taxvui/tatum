@@ -551,42 +551,22 @@ app.get("/api/cmc/global", async (req, res) => {
   }
 });
 
-// Setup unified bootstrap and serving hooks depending on the environment
-async function bootstrap() {
-  if (process.env.VERCEL) {
-    console.log("[SERVER] Chạy trên môi trường Vercel Serverless Function, bỏ qua cấu hình static server.");
-    return;
-  }
+// Setup static file serving for regular production (not Vercel)
+if (!process.env.VERCEL) {
+  console.log("[SERVER] Khởi động Production Static Server...");
+  const distPath = path.join(process.cwd(), "dist");
+  app.use(express.static(distPath));
+  
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/")) {
+      return next();
+    }
+    res.sendFile(path.join(distPath, "index.html"));
+  });
 
-  if (process.env.NODE_ENV !== "production") {
-    console.log("[SERVER] Khởi động Vite Development Server...");
-    const { createServer: createViteServer } = await import("vite");
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    console.log("[SERVER] Khởi động Production Static Server...");
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    
-    app.get("*", (req, res, next) => {
-      if (req.path.startsWith("/api/")) {
-        return next();
-      }
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
-
-  // Only bind port when not deploying on Vercel serverless platform
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Production Server running on port ${PORT}`);
   });
 }
-
-bootstrap().catch((err) => {
-  console.error("Lỗi khởi động máy chủ bootstrap:", err);
-});
 
 export default app;
