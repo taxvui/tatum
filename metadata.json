@@ -1,0 +1,6 @@
+{
+  "name": "Tatum Wallet Generator",
+  "description": "Ứng dụng tạo và quản lý địa chỉ ví trên tatum.io cho nhiều blockchain khác nhau (BTC, ETH, BSC, TRX, SOL, ADA, DOGE, LTC) hỗ trợ cả Testnet và Mainnet.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
