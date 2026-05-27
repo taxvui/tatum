@@ -365,8 +365,8 @@ const EXPLORERS_MAP: Record<string, { mainnet: string; testnet: string }> = {
     testnet: "https://testnet.bscscan.com/address/{address}"
   },
   BTC: {
-    mainnet: "https://www.blockchain.com/explorer/addresses/btc/{address}",
-    testnet: "https://www.blockchain.com/explorer/addresses/btc-testnet/{address}"
+    mainnet: "https://blockstream.info/address/{address}",
+    testnet: "https://blockstream.info/testnet/address/{address}"
   },
   TRX: {
     mainnet: "https://tronscan.org/#/address/{address}",
