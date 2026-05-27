@@ -90,3 +90,32 @@ export interface CmcGlobalMetrics {
   };
 }
 
+export interface UniswapToken {
+  chainId: number;
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  logoURI: string;
+  basePriceUsd?: number;
+}
+
+export interface UniswapQuoteResult {
+  success: boolean;
+  chainId: number;
+  routerAddress: string;
+  inputAmount: string;
+  outputAmount: string;
+  minimumReceived: string;
+  inputUsdValue: number;
+  outputUsdValue: number;
+  priceImpactPercentage: number;
+  slippagePaid: number;
+  path: string[];
+  gasUsedLimit: number;
+  estimatedGasUsd: number;
+  timestamp: number;
+  error?: string;
+}
+
+

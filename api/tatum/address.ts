@@ -79,24 +79,27 @@ export default async function handler(req: any, res: any) {
         const parsed = JSON.parse(raw);
         parsedError = parsed.message || parsed.error || raw;
       } catch (e) {}
-      console.warn(`[TATUM ADDRESS PROXY] API returned status ${response.status}: ${parsedError}. Falling back to simulated address derivation.`);
-      const mockAddress = generateMockDerivedAddress(chain, xpub, index);
-      return res.status(200).json({ address: mockAddress });
+      console.warn(`[TATUM ADDRESS PROXY] API returned status ${response.status}: ${parsedError}`);
+      return res.status(response.status || 450).json({ 
+        error: `Lỗi kết nối từ hệ thống Tatum API (Mã phản hồi ${response.status}): ${parsedError}`
+      });
     }
 
     let parsedData;
     try {
       parsedData = JSON.parse(raw);
     } catch {
-      console.warn("[TATUM ADDRESS] Failed to parse API JSON response. Generating fallback address.");
-      const mockAddress = generateMockDerivedAddress(chain, xpub, index);
-      return res.status(200).json({ address: mockAddress });
+      console.warn("[TATUM ADDRESS] Failed to parse API JSON response.");
+      return res.status(502).json({ 
+        error: "Không thể xử lý dữ liệu phản hồi (JSON) từ Tatum API khi trích xuất địa chỉ ví." 
+      });
     }
 
     return res.status(200).json(parsedData);
   } catch (error: any) {
-    console.error(`[TATUM ADDRESS PROXY Exception] ${error.message}. Running fallback...`);
-    const mockAddress = generateMockDerivedAddress(chain, xpub, index);
-    return res.status(200).json({ address: mockAddress });
+    console.error(`[TATUM ADDRESS PROXY Exception] ${error.message}`);
+    return res.status(500).json({ 
+      error: `Lỗi ngoại lệ khi kết nối để lấy địa chỉ từ Tatum API: ${error.message}`
+    });
   }
 }

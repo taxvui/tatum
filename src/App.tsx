@@ -65,6 +65,7 @@ import { generateWallet, deriveAddress, derivePrivateKey, testApiKey, getCmcList
 import DetailedCoinProfile from "./components/DetailedCoinProfile";
 import { TATUM_130_CHAINS, TatumChainInfo } from "./tatumChains130";
 import { getTrustWalletLogoUrl, getTrustWalletChainLogoUrl } from "./utils/trustwalletLogo";
+import { UniswapSwapTab } from "./components/UniswapSwapTab";
 
 // Helper function to dynamically simulate highly realistic CoinMarketCap historic price points
 const getHistoricPricePoints = (
@@ -147,7 +148,7 @@ export default function App() {
   }>({ tested: false, loading: false });
 
   // Main navigation tabs
-  const [activeTab, setActiveTab] = useState<"generate" | "derive" | "history" | "blockchains" | "market" | "connect">("market");
+  const [activeTab, setActiveTab] = useState<"generate" | "derive" | "history" | "blockchains" | "market" | "connect" | "swap">("market");
 
   // Chain Explorer States
   const [chainSearch, setChainSearch] = useState<string>("");
@@ -1195,6 +1196,22 @@ export default function App() {
           >
             <Database className="w-4 h-4" />
             <span>Danh Sách Đã Lưu ({savedWallets.length})</span>
+          </button>
+
+          <button 
+            id="tab-btn-uniswap-swap"
+            onClick={() => setActiveTab("swap")}
+            className={`py-3.5 px-4 md:px-6 font-medium text-sm border-b-2 transition duration-200 flex items-center space-x-2 ${
+              activeTab === "swap" 
+                ? "border-pink-500 text-pink-600 font-semibold" 
+                : "border-transparent text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            <ArrowUpDown className="w-4 h-4 text-pink-500" />
+            <span className="flex items-center gap-1.5">
+              <span>Giao dịch Uniswap</span>
+              <span className="bg-pink-150 text-pink-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">V3 API</span>
+            </span>
           </button>
         </nav>
 
@@ -3607,6 +3624,26 @@ export default function App() {
             </div>
           </>
         )}
+          </div>
+        )}
+
+        {/* Tab 7 Content: Uniswap v3 Swaps Gateway */}
+        {activeTab === "swap" && (
+          <div className="space-y-6 animate-fadeIn" id="uniswap-swap-tab-content">
+            <UniswapSwapTab 
+              savedWallets={savedWallets} 
+              onLogMessage={(msg, type) => {
+                setWsLogs(prev => [
+                  {
+                    id: String(Math.random()),
+                    timestamp: new Date().toLocaleTimeString(),
+                    message: `[Uniswap V3] ${msg}`,
+                    type: type || "info"
+                  },
+                  ...prev
+                ]);
+              }}
+            />
           </div>
         )}
 

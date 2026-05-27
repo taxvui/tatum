@@ -1,4 +1,4 @@
-import { WalletData, DerivedKeypair, CmcCryptoAsset, CmcGlobalMetrics } from "./types";
+import { WalletData, DerivedKeypair, CmcCryptoAsset, CmcGlobalMetrics, UniswapToken, UniswapQuoteResult } from "./types";
 
 export async function generateWallet(
   chain: string,
@@ -179,5 +179,32 @@ export async function getCmcGlobal(convert: string = "USD"): Promise<CmcGlobalMe
   }
 
   return result.data;
+}
+
+export async function getUniswapTokens(): Promise<UniswapToken[]> {
+  const response = await fetch("/api/uniswap/tokens");
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.errorMsg || "Không thể tải danh sách token từ Uniswap");
+  }
+  return data.tokens;
+}
+
+export async function getUniswapQuote(params: {
+  chainId: number;
+  fromTokenAddress: string;
+  toTokenAddress: string;
+  amount: string;
+  slippage?: number;
+}): Promise<UniswapQuoteResult> {
+  const response = await fetch("/api/uniswap/quote", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(params)
+  });
+  const data = await response.json();
+  return data;
 }
 

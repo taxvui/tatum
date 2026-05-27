@@ -107,11 +107,9 @@ export default async function handler(req: any, res: any) {
         const parsed = JSON.parse(raw);
         parsedError = parsed.message || parsed.error || raw;
       } catch (e) {}
-      console.warn(`[TATUM WALLET PROXY] API returned status ${response.status}: ${parsedError}. Falling back to simulated wallet generation.`);
-      const mockResult = generateMockWallet(chain, network);
-      return res.status(200).json({ 
-        ...mockResult, 
-        note: "Simulated Wallet due to API limits/restrictions" 
+      console.warn(`[TATUM WALLET PROXY] API returned status ${response.status}: ${parsedError}`);
+      return res.status(response.status || 400).json({ 
+        error: `Lỗi từ hệ thống Tatum API (Mã phản hồi ${response.status}): ${parsedError}`
       });
     }
 
@@ -119,21 +117,17 @@ export default async function handler(req: any, res: any) {
     try {
       parsedData = JSON.parse(raw);
     } catch {
-      console.warn("[TATUM WALLET] Failed to parse API JSON response. Generating mock wallet.");
-      const mockResult = generateMockWallet(chain, network);
-      return res.status(200).json({ 
-        ...mockResult, 
-        note: "Simulated Wallet due to API parsing issue" 
+      console.warn("[TATUM WALLET] Failed to parse API JSON response.");
+      return res.status(502).json({ 
+        error: "Không thể xử lý dữ liệu phản hồi (JSON) từ Tatum API." 
       });
     }
 
     return res.status(200).json(parsedData);
   } catch (error: any) {
-    console.error(`[TATUM WALLET PROXY Exception] ${error.message}. Running fallback...`);
-    const mockResult = generateMockWallet(chain, network);
-    return res.status(200).json({ 
-      ...mockResult, 
-      note: "Simulated Wallet fallback" 
+    console.error(`[TATUM WALLET PROXY Exception] ${error.message}`);
+    return res.status(500).json({ 
+      error: `Lỗi ngoại lệ khi kết nối tới Tatum API: ${error.message}`
     });
   }
 }

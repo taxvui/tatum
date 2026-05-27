@@ -9,6 +9,8 @@ import tatumWallet from "./api/tatum/wallet";
 import tatumAddress from "./api/tatum/address";
 import tatumPrivateKey from "./api/tatum/private-key";
 import tatumTestKey from "./api/tatum/test-key";
+import uniswapTokens from "./api/uniswap/tokens";
+import uniswapQuote from "./api/uniswap/quote";
 
 dotenv.config();
 
@@ -35,6 +37,8 @@ app.post("/api/tatum/wallet", tatumWallet);
 app.post("/api/tatum/address", tatumAddress);
 app.post("/api/tatum/private-key", tatumPrivateKey);
 app.post("/api/tatum/test-key", tatumTestKey);
+app.get("/api/uniswap/tokens", uniswapTokens);
+app.post("/api/uniswap/quote", uniswapQuote);
 
 // Setup static file serving for fallback or standalone production environments (non-Vercel environments)
 if (!process.env.VERCEL && process.env.DEV_SERVER !== "true") {

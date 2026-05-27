@@ -69,24 +69,27 @@ export default async function handler(req: any, res: any) {
         const parsed = JSON.parse(raw);
         parsedError = parsed.message || parsed.error || raw;
       } catch (e) {}
-      console.warn(`[TATUM PVKEY PROXY] API returned status ${response.status}: ${parsedError}. Falling back to simulated key derivation.`);
-      const mockKey = generateMockDerivedPrivateKey(chain, mnemonic, index);
-      return res.status(200).json({ key: mockKey });
+      console.warn(`[TATUM PVKEY PROXY] API returned status ${response.status}: ${parsedError}`);
+      return res.status(response.status || 400).json({ 
+        error: `Lỗi kết nối từ hệ thống Tatum API (Mã phản hồi ${response.status}): ${parsedError}`
+      });
     }
 
     let parsedData;
     try {
       parsedData = JSON.parse(raw);
     } catch {
-      console.warn("[TATUM PVKEY] Failed to parse JSON API response. Generating fallback private key.");
-      const mockKey = generateMockDerivedPrivateKey(chain, mnemonic, index);
-      return res.status(200).json({ key: mockKey });
+      console.warn("[TATUM PVKEY] Failed to parse JSON API response.");
+      return res.status(502).json({ 
+        error: "Không thể xử lý dữ liệu phản hồi (JSON) từ Tatum API khi trích xuất khóa riêng." 
+      });
     }
 
     return res.status(200).json(parsedData);
   } catch (error: any) {
-    console.error(`[TATUM PVKEY PROXY Exception] ${error.message}. Running fallback...`);
-    const mockKey = generateMockDerivedPrivateKey(chain, mnemonic, index);
-    return res.status(200).json({ key: mockKey });
+    console.error(`[TATUM PVKEY PROXY Exception] ${error.message}`);
+    return res.status(500).json({ 
+      error: `Lỗi ngoại lệ khi kết nối để lấy khóa riêng tư từ Tatum API: ${error.message}`
+    });
   }
 }
