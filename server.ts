@@ -545,6 +545,9 @@ app.get("/api/cmc/listings", async (req, res) => {
   const { start = "1", limit = "100", convert = "USD", sort = "market_cap", sort_dir = "desc" } = req.query;
   const limitNum = Math.min(100, Math.max(1, Number(limit)));
   
+  // Debug ENV and log key status for Vercel/Serverless troubleshooting
+  console.log("CMC KEY EXISTS:", !!process.env.CMC_API_KEY);
+  
   try {
     const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=${start}&limit=${limitNum}&convert=${convert}&sort=${sort}&sort_dir=${sort_dir}`;
     const response = await fetch(url, {
@@ -558,6 +561,7 @@ app.get("/api/cmc/listings", async (req, res) => {
 
     console.log(`[CMC LISTINGS STATUS] ${response.status}`);
     const rawText = await response.text();
+    console.log(`[CMC LISTINGS RAW] ${rawText.slice(0, 300)}`);
 
     if (!response.ok) {
       let parsedError = rawText;
@@ -566,28 +570,32 @@ app.get("/api/cmc/listings", async (req, res) => {
         parsedError = parsed.status?.error_message || parsed.error || rawText;
       } catch (e) {}
       console.warn(`[CMC PROXY listings status check failed] API returned status ${response.status}: ${parsedError.slice(0, 300)}. Using high-fidelity local market listings data.`);
-      return res.json({ data: FALLBACK_CMC_DATA });
+      return res.json({ data: FALLBACK_CMC_DATA, simulated: true, errorMsg: parsedError.slice(0, 100) });
     }
 
     // Safely parse JSON from raw text to prevent crashes if Vercel serverless gets blocked or HTML page is returned
     let parsedData;
     try {
       parsedData = JSON.parse(rawText);
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error(`[CMC PROXY listings JSON Parse Error] CoinMarketCap did not return valid JSON: ${rawText.slice(0, 300)}. Falling back to local mock data.`);
-      return res.json({ data: FALLBACK_CMC_DATA });
+      return res.json({ data: FALLBACK_CMC_DATA, simulated: true, errorMsg: parseError.message });
     }
 
     return res.json(parsedData);
   } catch (error: any) {
     console.error(`[CMC PROXY Exception] Error: ${error.message}. Returning high-fidelity local cache.`);
-    return res.json({ data: FALLBACK_CMC_DATA });
+    return res.json({ data: FALLBACK_CMC_DATA, simulated: true, errorMsg: error.message });
   }
 });
 
 // Proxy endpoint for CoinMarketCap Global Metrics
 app.get("/api/cmc/global", async (req, res) => {
   const { convert = "USD" } = req.query;
+  
+  // Debug ENV and log key status for Vercel/Serverless troubleshooting
+  console.log("CMC KEY EXISTS:", !!process.env.CMC_API_KEY);
+  
   try {
     const url = `https://pro-api.coinmarketcap.com/v1/global-metrics/quotes/latest?convert=${convert}`;
     const response = await fetch(url, {
@@ -601,6 +609,7 @@ app.get("/api/cmc/global", async (req, res) => {
 
     console.log(`[CMC GLOBAL STATUS] ${response.status}`);
     const rawText = await response.text();
+    console.log(`[CMC GLOBAL RAW] ${rawText.slice(0, 300)}`);
 
     if (!response.ok) {
       let parsedError = rawText;
@@ -609,22 +618,22 @@ app.get("/api/cmc/global", async (req, res) => {
         parsedError = parsed.status?.error_message || parsed.error || rawText;
       } catch (e) {}
       console.warn(`[CMC PROXY global status check failed] API returned status ${response.status}: ${parsedError.slice(0, 300)}. Using high-fidelity local global metrics data.`);
-      return res.json({ data: FALLBACK_CMC_GLOBAL });
+      return res.json({ data: FALLBACK_CMC_GLOBAL, simulated: true, errorMsg: parsedError.slice(0, 100) });
     }
 
     // Safely parse JSON from raw text
     let parsedData;
     try {
       parsedData = JSON.parse(rawText);
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error(`[CMC PROXY global JSON Parse Error] CoinMarketCap did not return valid JSON: ${rawText.slice(0, 300)}. Falling back to local global mock data.`);
-      return res.json({ data: FALLBACK_CMC_GLOBAL });
+      return res.json({ data: FALLBACK_CMC_GLOBAL, simulated: true, errorMsg: parseError.message });
     }
 
     return res.json(parsedData);
   } catch (error: any) {
     console.error(`[CMC PROXY GLOBAL Exception] Error: ${error.message}. Returning high-fidelity base global data.`);
-    return res.json({ data: FALLBACK_CMC_GLOBAL });
+    return res.json({ data: FALLBACK_CMC_GLOBAL, simulated: true, errorMsg: error.message });
   }
 });
 
