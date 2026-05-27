@@ -1,8 +1,10 @@
-import app from "./server.ts";
 import { createServer as createViteServer } from "vite";
 
 async function startDevServer() {
   const PORT = 3000;
+  process.env.DEV_SERVER = "true";
+  
+  const { default: app } = await import("./server");
   
   console.log("[DEV-SERVER] Khởi động Vite Development Server...");
   const vite = await createViteServer({

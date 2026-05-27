@@ -286,8 +286,8 @@ app.get("/api/cmc/global", async (req, res) => {
   }
 });
 
-// Setup static file serving for regular production (not Vercel)
-if (!process.env.VERCEL) {
+// Setup static file serving for regular production (not Vercel or local Dev Server)
+if (!process.env.VERCEL && process.env.DEV_SERVER !== "true") {
   console.log("[SERVER] Khởi động Production Static Server...");
   const distPath = path.join(process.cwd(), "dist");
   app.use(express.static(distPath));
