@@ -22,6 +22,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useBalance } from "wagmi";
 import { useUniswapSwap } from "../hooks/useUniswapSwap";
 import { formatUnits } from "viem";
+import { getExplorerTxUrl } from "../utils/explorer";
 
 interface UniswapSwapTabProps {
   savedWallets: WalletData[];
@@ -1246,7 +1247,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                       <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] font-mono flex items-center justify-between">
                         <span className="text-slate-500 font-bold">Mã duyệt chi (Approve Hash):</span>
                         <a 
-                          href={`https://etherscan.io/tx/${approveHash}`} 
+                          href={getExplorerTxUrl(activeChain.id, approveHash)} 
                           target="_blank" 
                           rel="noreferrer"
                           className="text-pink-600 hover:underline flex items-center gap-1 font-bold truncate max-w-[150px]"
@@ -1261,7 +1262,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                       <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] font-mono flex items-center justify-between">
                         <span className="text-slate-500 font-bold">Mã Giao dịch (Swap Hash):</span>
                         <a 
-                          href={`https://etherscan.io/tx/${swapHash}`} 
+                          href={getExplorerTxUrl(activeChain.id, swapHash)} 
                           target="_blank" 
                           rel="noreferrer"
                           className="text-indigo-600 hover:underline flex items-center gap-1 font-bold truncate max-w-[150px]"
@@ -1326,7 +1327,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                       <div className="flex justify-between">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Mã Hash (TxID):</span>
                         <a 
-                          href={`${activeChain.scan}/tx/${swapResult.txHash}`} 
+                          href={getExplorerTxUrl(activeChain.id, swapResult.txHash)} 
                           target="_blank" 
                           rel="noreferrer"
                           className="text-blue-600 hover:underline flex items-center gap-1 font-bold truncate max-w-[180px]"
@@ -1390,7 +1391,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                       <div className="flex justify-between items-center text-[10.5px] text-slate-500">
                         <span>Trị giá: ~${item.usdValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD</span>
                         <a 
-                          href={`${activeChain.scan}/tx/${item.txHash}`} 
+                          href={getExplorerTxUrl(item.chain, item.txHash)} 
                           target="_blank" 
                           rel="noreferrer" 
                           className="text-indigo-600 hover:underline flex items-center gap-0.5 font-bold"

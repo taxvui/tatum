@@ -60,6 +60,7 @@ import {
   Line
 } from "recharts";
 import { SUPPORTED_CHAINS } from "./data";
+import { getExplorerAddressUrl, getExplorerTxUrl } from "./utils/explorer";
 import { WalletData, DerivedKeypair, ChainConfig, CmcCryptoAsset, CmcGlobalMetrics } from "./types";
 import { generateWallet, deriveAddress, derivePrivateKey, testApiKey, getCmcListings, getCmcGlobal } from "./api";
 import DetailedCoinProfile from "./components/DetailedCoinProfile";
@@ -367,9 +368,9 @@ export default function App() {
       case "0x89":
       case "137":
         return { name: "Polygon Mainnet", symbol: "POL", explorer: "https://polygonscan.com" };
-      case "0x13881":
-      case "80001":
-        return { name: "Polygon Mumbai", symbol: "POL", explorer: "https://mumbai.polygonscan.com" };
+      case "0x13882":
+      case "80002":
+        return { name: "Polygon Amoy", symbol: "POL", explorer: "https://amoy.polygonscan.com" };
       case "0xa4b1":
       case "42161":
         return { name: "Arbitrum One", symbol: "ETH", explorer: "https://arbiscan.io" };
@@ -474,8 +475,12 @@ export default function App() {
     const isTestnet = 
       chainInfo.name.toLowerCase().includes("testnet") || 
       chainInfo.name.toLowerCase().includes("sepolia") || 
+      chainInfo.name.toLowerCase().includes("amoy") || 
       chainInfo.name.toLowerCase().includes("mumbai") || 
-      chainInfo.name.toLowerCase().includes("goerli");
+      chainInfo.name.toLowerCase().includes("goerli") ||
+      chainInfo.name.toLowerCase().includes("fuji") ||
+      chainInfo.name.toLowerCase().includes("holesky") ||
+      chainInfo.name.toLowerCase().includes("test");
 
     const newConnectedWallet: WalletData = {
       id: `connected-${web3WalletType}-${web3Account}-${Date.now()}`,
@@ -1415,11 +1420,7 @@ export default function App() {
                           <div className="flex flex-wrap items-center gap-2">
                             <a
                               id="btn-explorer-link-zero"
-                              href={
-                                network === "mainnet"
-                                  ? selectedChain.explorers?.mainnet.replace("{address}", indexZeroDetails.address)
-                                  : selectedChain.explorers?.testnet.replace("{address}", indexZeroDetails.address)
-                              }
+                              href={getExplorerAddressUrl(selectedChain.id, indexZeroDetails.address, network)}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1.5 bg-slate-900 border border-slate-800 text-white font-bold text-[11px] py-1.5 px-3 rounded-lg hover:bg-slate-800 transition shadow-sm cursor-pointer whitespace-nowrap active:scale-95"
@@ -1849,7 +1850,7 @@ export default function App() {
                       {derivedKeypairs.map((k, i) => {
                         const activeDeriveChainObj = SUPPORTED_CHAINS.find(c => c.id === deriveInput.chain);
                         const pathString = `m/44'/${deriveInput.chain === "BTC" ? "0" : "60"}'/0'/0/${k.index}`;
-                        const expUrl = activeDeriveChainObj?.explorers?.[deriveInput.network as "mainnet" | "testnet"]?.replace("{address}", k.address);
+                        const expUrl = getExplorerAddressUrl(deriveInput.chain, k.address, deriveInput.network as "mainnet" | "testnet");
                         return (
                           <tr key={i} className="hover:bg-slate-50/70 transition">
                             <td className="p-3.5 font-mono font-bold text-slate-600 bg-slate-50 text-center border-r border-slate-100">
@@ -2576,7 +2577,7 @@ export default function App() {
                     <div className="flex flex-col justify-between gap-3 shrink-0 pt-4 md:pt-0 md:border-l border-slate-200 md:pl-6 max-sm:w-full min-w-[150px]">
                       {(() => {
                         const walletChainObj = SUPPORTED_CHAINS.find(c => c.id === wallet.chain);
-                        const expUrl = walletChainObj?.explorers?.[wallet.network]?.replace("{address}", wallet.address || "");
+                        const expUrl = getExplorerAddressUrl(wallet.chain, wallet.address || "", wallet.network);
                         return (
                           <div className="flex flex-col gap-2 w-full">
                             {expUrl && wallet.address && (
@@ -2874,7 +2875,7 @@ export default function App() {
                             <div className="flex gap-2 font-semibold">
                               {chain.explorers?.mainnet && (
                                 <a
-                                  href={chain.explorers.mainnet.replace("{address}", "")}
+                                  href={getExplorerAddressUrl(chain.id, "", "mainnet")}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="text-blue-600 hover:underline inline-flex items-center gap-0.5"
@@ -2886,7 +2887,7 @@ export default function App() {
                               )}
                               {chain.explorers?.testnet && (
                                 <a
-                                  href={chain.explorers.testnet.replace("{address}", "")}
+                                  href={getExplorerAddressUrl(chain.id, "", "testnet")}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="text-amber-600 hover:underline inline-flex items-center gap-0.5"

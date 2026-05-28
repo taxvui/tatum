@@ -1,4 +1,5 @@
 import { generateTezosKeys } from "./tezosCrypto.js";
+import { generateMultiversXKeys } from "./multiversxCrypto.js";
 
 const getTatumChainName = (chain: string): { tatumChain: string; isEVM: boolean } => {
   const chainLower = chain.toLowerCase();
@@ -57,6 +58,9 @@ const generateMockDerivedPrivateKey = (chain: string, mnemonic: string, index: n
   } else if (chainLower === "xtz" || chainLower === "tezos") {
     const tezosWallet = generateTezosKeys(mnemonic, index);
     return tezosWallet.privateKey;
+  } else if (chainLower === "egld" || chainLower === "elrond" || chainLower === "multiversx") {
+    const elrondWallet = generateMultiversXKeys(mnemonic, index);
+    return elrondWallet.privateKey;
   } else {
     // Standard EVM, Bitcoin, Litecoin, Tron, etc.
     return "0x" + Array.from({ length: 56 }, () => hex.charAt(Math.floor(Math.random() * 16))).join("") + index.toString(16).padStart(6, "0");

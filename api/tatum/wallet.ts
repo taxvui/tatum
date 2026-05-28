@@ -45,6 +45,7 @@ const getApiKey = (network: "mainnet" | "testnet", customKey?: string) => {
 };
 
 import { generateTezosKeys } from "./tezosCrypto.js";
+import { generateMultiversXKeys } from "./multiversxCrypto.js";
 
 const generateMockWallet = (chain: string, network: string) => {
   const words = [
@@ -82,6 +83,11 @@ const generateMockWallet = (chain: string, network: string) => {
     address = tezosWallet.address;
     privateKey = tezosWallet.privateKey;
     xpub = tezosWallet.xpub;
+  } else if (chainLower === "egld" || chainLower === "elrond" || chainLower === "multiversx") {
+    const elrondWallet = generateMultiversXKeys(mnemonic, 0);
+    address = elrondWallet.address;
+    privateKey = elrondWallet.privateKey;
+    xpub = elrondWallet.xpub;
   } else if (chainLower === "xlm" || chainLower === "stellar") {
     address = "G" + Array.from({ length: 55 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length)).toUpperCase()).join("");
     privateKey = "S" + Array.from({ length: 55 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length)).toUpperCase()).join("");

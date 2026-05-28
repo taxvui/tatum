@@ -1,4 +1,5 @@
-import { getAddressFromPublicKey } from "./tezosCrypto.js";
+import { getAddressFromPublicKey as getTezosAddressFromPublicKey } from "./tezosCrypto.js";
+import { getAddressFromPublicKey as getMultiversXAddressFromPublicKey } from "./multiversxCrypto.js";
 
 const getTatumChainName = (chain: string): { tatumChain: string; isEVM: boolean } => {
   const chainLower = chain.toLowerCase();
@@ -53,7 +54,9 @@ const generateMockDerivedAddress = (chain: string, xpub: string, index: number) 
   if (chainLower === "btc" || chainLower === "bitcoin") {
     return "bc1q" + Array.from({ length: 34 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length))).join("").toLowerCase() + indexHash;
   } else if (chainLower === "xtz" || chainLower === "tezos") {
-    return getAddressFromPublicKey(xpub);
+    return getTezosAddressFromPublicKey(xpub);
+  } else if (chainLower === "egld" || chainLower === "elrond" || chainLower === "multiversx") {
+    return getMultiversXAddressFromPublicKey(xpub);
   } else if (chainLower === "xlm" || chainLower === "stellar") {
     return "G" + Array.from({ length: 51 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length)).toUpperCase()).join("") + indexHash.toUpperCase();
   } else if (chainLower === "xrp" || chainLower === "ripple") {
