@@ -61,7 +61,8 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
   const [widgetCustomTo, setWidgetCustomTo] = useState<string>("");
   const [iframeKey, setIframeKey] = useState<number>(0);
   const [iframeLoading, setIframeLoading] = useState<boolean>(false);
-  const [widgetSource, setWidgetSource] = useState<"cloudflare-ipfs" | "ipfs-io" | "official">("cloudflare-ipfs");
+  const [widgetSource, setWidgetSource] = useState<string>("cloudflare-ipfs");
+  const [customGateway, setCustomGateway] = useState<string>("https://dweb.link");
 
   // Quick preset tokens configuration for Multi-chain & Testnets
   const WIDGET_PRECISION_PRESETS: Record<number, Array<{ symbol: string; address: string; name: string }>> = {
@@ -327,6 +328,23 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
       base = "https://cloudflare-ipfs.com/ipns/app.uniswap.org/#/swap";
     } else if (widgetSource === "ipfs-io") {
       base = "https://ipfs.io/ipns/app.uniswap.org/#/swap";
+    } else if (widgetSource === "dweb-link") {
+      base = "https://dweb.link/ipns/app.uniswap.org/#/swap";
+    } else if (widgetSource === "w3s-link") {
+      base = "https://w3s.link/ipns/app.uniswap.org/#/swap";
+    } else if (widgetSource === "custom") {
+      let gw = customGateway.trim();
+      if (gw) {
+        if (!gw.startsWith("http://") && !gw.startsWith("https://")) {
+          gw = "https://" + gw;
+        }
+        if (gw.endsWith("/")) {
+          gw = gw.slice(0, -1);
+        }
+        base = `${gw}/ipns/app.uniswap.org/#/swap`;
+      } else {
+        base = "https://dweb.link/ipns/app.uniswap.org/#/swap";
+      }
     }
     const params = new URLSearchParams();
     params.set("theme", widgetTheme);
@@ -408,18 +426,30 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                     <span>Hộp Giao Dịch Uniswap Cổng Thật (Main & Test)</span>
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5 font-medium">Kết nối trực tiếp ví MetaMask, Trust Wallet của bạn để ký giao dịch thật.</p>
-                  <div className="flex items-center gap-1.5 mt-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
                       widgetSource === "cloudflare-ipfs" 
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-150"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                         : widgetSource === "ipfs-io"
-                        ? "bg-indigo-50 text-indigo-700 border border-indigo-150"
-                        : "bg-amber-50 text-amber-700 border border-amber-150"
+                        ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                        : widgetSource === "dweb-link"
+                        ? "bg-teal-50 text-teal-700 border border-teal-200"
+                        : widgetSource === "w3s-link"
+                        ? "bg-cyan-50 text-cyan-700 border border-cyan-200"
+                        : widgetSource === "official"
+                        ? "bg-amber-50 text-amber-700 border border-amber-200"
+                        : "bg-purple-50 text-purple-750 border border-purple-200"
                     }`}>
                       Nguồn: {
-                        widgetSource === "cloudflare-ipfs" ? "Cloudflare IPFS Mirror (Mở khóa chặn Firefox)" :
-                        widgetSource === "ipfs-io" ? "IPFS.io Mirror (Dự phòng)" : "app.uniswap.org (Có thể bị trình duyệt chặn)"
+                        widgetSource === "cloudflare-ipfs" ? "Cloudflare IPFS Mirror" :
+                        widgetSource === "ipfs-io" ? "IPFS.io Mirror" :
+                        widgetSource === "dweb-link" ? "Dweb.link IPFS" :
+                        widgetSource === "w3s-link" ? "W3S.link IPFS" :
+                        widgetSource === "official" ? "app.uniswap.org (Gốc)" : "Cổng Tự Định Nghĩa (Custom)"
                       }
+                    </span>
+                    <span className="text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded font-mono truncate max-w-[280px]">
+                      {getWidgetUrl().split("/#/")[0]}
                     </span>
                   </div>
                 </div>
@@ -491,7 +521,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
               </h3>
 
               {/* Iframe Source Selection */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <label className="text-[10px] font-bold text-pink-600 uppercase tracking-widest font-mono flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-pink-500 animate-pulse" />
                   <span>1. Nguồn Nhúng Iframe (Bypass Firefox/Chrome block)</span>
@@ -514,10 +544,34 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                       <span className="text-[11px] font-black flex items-center gap-1.5">
                         ⚡ Cloudflare IPFS Mirror
                       </span>
-                      <span className="text-[9px] font-black uppercase text-emerald-600 px-1.5 py-0.5 bg-emerald-50 rounded">Khuyên Dùng</span>
+                      <span className="text-[9px] font-black uppercase text-slate-500 px-1.5 py-0.5 bg-slate-100 rounded">IPFS 1</span>
                     </div>
                     <span className="block text-[10px] text-slate-500 mt-1 leading-snug font-semibold">
-                      Hoạt động trực tiếp không lo lỗi CSP hay X-Frame-Options trên Firefox.
+                      Cổng Cloudflare IPFS (`cloudflare-ipfs.com`). Thường bị chậm hoặc lỗi kết nối ở một số nhà mạng/vùng miền.
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIframeLoading(true);
+                      setWidgetSource("dweb-link");
+                      setIframeKey(p => p + 1);
+                      setTimeout(() => setIframeLoading(false), 800);
+                    }}
+                    className={`p-3 rounded-2xl border text-left cursor-pointer transition ${
+                      widgetSource === "dweb-link"
+                        ? "bg-pink-50/80 border-pink-300 text-pink-900 shadow-sm"
+                        : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-150"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black flex items-center gap-1.5 text-emerald-700">
+                        🌐 Dweb.link Mirror (Khuyên Dùng Mới)
+                      </span>
+                      <span className="text-[9px] font-black uppercase text-emerald-600 px-1.5 py-0.5 bg-emerald-50 rounded">Khuyên Dùng</span>
+                    </div>
+                    <span className="block text-[10px] text-slate-600 mt-1 leading-snug font-semibold">
+                      Chạy trên cổng IPFS chính quy phi tập trung dweb.link. Rất ổn định, tốc độ phản hồi nhanh tại châu Á.
                     </span>
                   </button>
 
@@ -536,12 +590,36 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-black flex items-center gap-1.5">
-                        🌐 IPFS.io Mirror
+                        📦 IPFS.io Core Gateway
                       </span>
                       <span className="text-[9px] font-black uppercase text-indigo-600 px-1.5 py-0.5 bg-indigo-50 rounded">Dự Phòng</span>
                     </div>
                     <span className="block text-[10px] text-slate-500 mt-1 leading-snug font-medium">
-                      Kết nối phân tán tốc độ cao từ IPFS core gateway.
+                      Cổng IPFS truyền thống (`ipfs.io`). Có thể bị một số nhà mạng chặn truy cập hoặc phản hồi chậm.
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIframeLoading(true);
+                      setWidgetSource("w3s-link");
+                      setIframeKey(p => p + 1);
+                      setTimeout(() => setIframeLoading(false), 800);
+                    }}
+                    className={`p-3 rounded-2xl border text-left cursor-pointer transition ${
+                      widgetSource === "w3s-link"
+                        ? "bg-pink-50/80 border-pink-300 text-pink-900 shadow-sm"
+                        : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-150"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black flex items-center gap-1.5">
+                        🛰️ Web3.Storage (w3s.link)
+                      </span>
+                      <span className="text-[9px] font-black uppercase text-cyan-600 px-1.5 py-0.5 bg-cyan-50 rounded">IPFS 4</span>
+                    </div>
+                    <span className="block text-[10px] text-slate-500 mt-1 leading-snug font-medium">
+                      Sử dụng cổng phân tán của Web3.Storage để truy xuất dApp an toàn.
                     </span>
                   </button>
 
@@ -565,9 +643,61 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                       <span className="text-[9px] font-black uppercase text-amber-600 px-1.5 py-0.5 bg-amber-50 rounded">Bản Gốc</span>
                     </div>
                     <span className="block text-[10px] text-slate-400 mt-1 leading-snug font-medium">
-                      Sử dụng domain gốc của Uniswap. Có thể bị Firefox/Chrome chặn trong Iframe.
+                      Sử dụng domain gốc của Uniswap. Có thể bị Firefox/Chrome chặn trong Iframe do cấu hình bảo mật CORS.
                     </span>
                   </button>
+
+                  <button
+                    onClick={() => {
+                      setIframeLoading(true);
+                      setWidgetSource("custom");
+                      setIframeKey(p => p + 1);
+                      setTimeout(() => setIframeLoading(false), 800);
+                    }}
+                    className={`p-3 rounded-2xl border text-left cursor-pointer transition ${
+                      widgetSource === "custom"
+                        ? "bg-pink-50/80 border-pink-300 text-pink-900 shadow-sm"
+                        : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-150"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black flex items-center gap-1.5 text-purple-700">
+                        ⚙️ Cổng Tự Định Nghĩa (Custom Gateway)
+                      </span>
+                      <span className="text-[9px] font-black uppercase text-purple-600 px-1.5 py-0.5 bg-purple-50 rounded">Cá Nhân</span>
+                    </div>
+                    <span className="block text-[10px] text-slate-500 mt-1 leading-snug font-medium">
+                      Nhập bất kỳ cổng IPFS công khai hoặc riêng tư nào khác để tự do hoán đổi.
+                    </span>
+                  </button>
+
+                  {widgetSource === "custom" && (
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 mt-1">
+                      <label className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Nhập URL IPFS Gateway:</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={customGateway}
+                          onChange={(e) => setCustomGateway(e.target.value)}
+                          placeholder="E.g., https://gateway.pinata.cloud"
+                          className="flex-1 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-pink-500 ring-offset-1"
+                        />
+                        <button
+                          onClick={() => {
+                            setIframeLoading(true);
+                            setIframeKey(p => p + 1);
+                            setTimeout(() => setIframeLoading(false), 800);
+                          }}
+                          className="px-3 py-1.5 bg-pink-500 hover:bg-pink-600 text-white font-extrabold text-xs rounded-xl transition cursor-pointer shrink-0"
+                        >
+                          Áp dụng
+                        </button>
+                      </div>
+                      <span className="block text-[9px] text-slate-400 leading-normal">
+                        Một số gateway tốt khác: `https://gateway.pinata.cloud`, `https://4everland.io`, `https://stb.su`, `https://hardbin.com`
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
