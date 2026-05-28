@@ -535,6 +535,10 @@ const FAUCETS_MAP: Record<string, string[]> = {
   OPTIMISM: [
     "https://faucet.quicknode.com/optimism/sepolia",
     "https://sepoliafaucet.com"
+  ],
+  TEZOS: [
+    "https://faucet.marigold.dev",
+    "https://faucet.ghostnet.teztnets.com"
   ]
 };
 
