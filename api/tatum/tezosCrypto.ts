@@ -1,4 +1,6 @@
 import crypto from "crypto";
+// @ts-ignore
+import blake from "blakejs";
 
 const BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
@@ -58,7 +60,7 @@ export function generateTezosKeys(mnemonic: string, index: number = 0) {
   const pubKeyBytes = Buffer.from(x, "base64");
   
   // 4. Tezos Address pkh (Blake2b 160)
-  const pkh = crypto.createHash("blake2b", { outputLength: 20 }).update(pubKeyBytes).digest();
+  const pkh = Buffer.from(blake.blake2b(pubKeyBytes, null, 20));
   const address = encodeBase58Check([6, 161, 159], pkh); // tz1 prefix
   
   // 5. Tezos Private Key (edsk - 54 characters format)
@@ -116,7 +118,7 @@ function decodeBase58Check(str: string): { prefix: number[]; payload: Buffer } {
 export function getAddressFromPublicKey(edpk: string): string {
   try {
     const { payload } = decodeBase58Check(edpk);
-    const pkh = crypto.createHash("blake2b", { outputLength: 20 }).update(payload).digest();
+    const pkh = Buffer.from(blake.blake2b(payload, null, 20));
     return encodeBase58Check([6, 161, 159], pkh);
   } catch (err) {
     return "tz1" + edpk.slice(4, 37);
