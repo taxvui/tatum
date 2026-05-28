@@ -951,9 +951,15 @@ export default function App() {
         {/* Top Header Banner */}
         <header className="mb-8 border-b border-slate-200 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6" id="app-header">
           <div>
-            <div className="flex items-center space-x-2 bg-blue-50 text-blue-700 font-mono text-xs px-2.5 py-1 rounded-full w-max mb-3 font-semibold border border-blue-100">
-              <Network className="w-3.5 h-3.5" />
-              <span>POWERED BY TATUM.IO API PROXIES</span>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <div className="flex items-center space-x-2 bg-blue-50 text-blue-700 font-mono text-xs px-2.5 py-1 rounded-full font-semibold border border-blue-100">
+                <Network className="w-3.5 h-3.5" />
+                <span>POWERED BY TATUM.IO API PROXIES</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-purple-50 text-purple-700 font-mono text-xs px-2.5 py-1 rounded-full font-semibold border border-purple-100 shadow-sm">
+                <Globe className="w-3.5 h-3.5" />
+                <span>EXPLORER: BLOCKSCOUNT.COM PRO ACTIVE 🔑</span>
+              </div>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-800" id="main-title">
               Tạo Địa Chỉ Ví <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Tatum Client</span>
