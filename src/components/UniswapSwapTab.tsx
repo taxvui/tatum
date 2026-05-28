@@ -17,6 +17,11 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { UniswapToken, UniswapQuoteResult, WalletData } from "../types";
 import { getUniswapTokens, getUniswapQuote } from "../api";
+import { convertIpfsUri } from "../utils/ipfs";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useBalance } from "wagmi";
+import { useUniswapSwap } from "../hooks/useUniswapSwap";
+import { formatUnits } from "viem";
 
 interface UniswapSwapTabProps {
   savedWallets: WalletData[];
@@ -33,6 +38,12 @@ const SUPPORTED_CHAINS = [
 export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabProps) {
   // Mode selection: "widget" (Official Embed Widget) or "analyst" (Analytic router simulation)
   const [swapMode, setSwapMode] = useState<"widget" | "analyst">("widget");
+
+  // Web3 Connected hooks
+  const { address: connectedAddress, isConnected } = useAccount();
+  const { data: connectedBalance } = useBalance({
+    address: connectedAddress,
+  });
 
   // Chain selection
   const [selectedChainId, setSelectedChainId] = useState<number>(1);
@@ -53,6 +64,24 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
   const [slippage, setSlippage] = useState<number>(0.5);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [customSlippage, setCustomSlippage] = useState<string>("");
+
+  // Live on-chain swap and approval interface controllers
+  const {
+    isApprovalNeeded,
+    isApprovePending,
+    isSwapPending,
+    isSwapSuccess,
+    txError,
+    approveHash,
+    swapHash,
+    handleApprove,
+    handleSwap
+  } = useUniswapSwap(
+    fromToken?.address,
+    toToken?.address,
+    fromAmount,
+    fromToken?.decimals || 18
+  );
   
   // Official Widget Settings & Customizations
   const [widgetChainId, setWidgetChainId] = useState<number>(1);
@@ -61,7 +90,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
   const [widgetCustomTo, setWidgetCustomTo] = useState<string>("");
   const [iframeKey, setIframeKey] = useState<number>(0);
   const [iframeLoading, setIframeLoading] = useState<boolean>(false);
-  const [widgetSource, setWidgetSource] = useState<string>("cloudflare-ipfs");
+  const [widgetSource, setWidgetSource] = useState<string>("dweb-link");
   const [customGateway, setCustomGateway] = useState<string>("https://dweb.link");
 
   // Quick preset tokens configuration for Multi-chain & Testnets
@@ -129,6 +158,11 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
   // Modals for asset picking
   const [showTokenModal, setShowTokenModal] = useState<"from" | "to" | null>(null);
   const [tokenSearch, setTokenSearch] = useState<string>("");
+
+  // Helper function to safely formatting token logo URIs
+  const formatLogoUri = (uri?: string): string => {
+    return convertIpfsUri(uri);
+  };
 
   // Refs for debouncing quote updates
   const quoteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -387,30 +421,36 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
         </div>
       </div>
 
-      {/* Switch Mode Slider Selector */}
-      <div className="flex bg-slate-100/80 p-1.5 rounded-2xl w-fit shadow-inner border border-slate-200/50">
-        <button
-          onClick={() => setSwapMode("widget")}
-          className={`py-2 px-5 rounded-xl text-xs font-black transition duration-250 cursor-pointer flex items-center space-x-2 ${
-            swapMode === "widget"
-              ? "bg-white text-pink-600 shadow-md border border-slate-100"
-              : "text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          <Sparkles className="w-4 h-4 text-pink-500" />
-          <span>Nhúng Uniswap Widget (Web3 Thực Tế)</span>
-        </button>
-        <button
-          onClick={() => setSwapMode("analyst")}
-          className={`py-2 px-5 rounded-xl text-xs font-black transition duration-250 cursor-pointer flex items-center space-x-2 ${
-            swapMode === "analyst"
-              ? "bg-white text-indigo-600 shadow-md border border-slate-100"
-              : "text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          <TrendingUp className="w-4 h-4 text-indigo-500" />
-          <span>Trình Tính Toán & Phân Tích Định Tuyến (Tatum)</span>
-        </button>
+      {/* Switch Mode Slider Selector + ConnectWallet Button */}
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div className="flex bg-slate-100/80 p-1.5 rounded-2xl w-fit shadow-inner border border-slate-200/50">
+          <button
+            onClick={() => setSwapMode("widget")}
+            className={`py-2 px-5 rounded-xl text-xs font-black transition duration-250 cursor-pointer flex items-center space-x-2 ${
+              swapMode === "widget"
+                ? "bg-white text-pink-600 shadow-md border border-slate-100"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-pink-500" />
+            <span>Nhúng Uniswap Widget (Web3 Thực Tế)</span>
+          </button>
+          <button
+            onClick={() => setSwapMode("analyst")}
+            className={`py-2 px-5 rounded-xl text-xs font-black transition duration-250 cursor-pointer flex items-center space-x-2 ${
+              swapMode === "analyst"
+                ? "bg-white text-indigo-600 shadow-md border border-slate-100"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            <TrendingUp className="w-4 h-4 text-indigo-500" />
+            <span>Trình Tính Toán & Phân Tích Định Tuyến (Tatum)</span>
+          </button>
+        </div>
+
+        <div className="shrink-0 bg-white border border-slate-200 p-1.5 rounded-2xl shadow-sm">
+          <ConnectButton />
+        </div>
       </div>
 
       {swapMode === "widget" ? (
@@ -973,7 +1013,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                       className="bg-white border border-slate-200 hover:border-slate-350 px-3 py-1.5 rounded-xl flex items-center space-x-2 shrink-0 shadow-sm font-bold text-slate-700 hover:bg-slate-50 transition"
                     >
                       {fromToken?.logoURI ? (
-                        <img src={fromToken.logoURI} alt={fromToken.symbol} className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
+                        <img src={formatLogoUri(fromToken.logoURI)} alt={fromToken.symbol} className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
                       ) : (
                         <div className="w-5 h-5 bg-indigo-100 text-indigo-600 flex items-center justify-center rounded-full text-[10px] font-black">{fromToken?.symbol[0]}</div>
                       )}
@@ -1025,7 +1065,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                       className="bg-white border border-slate-200 hover:border-slate-350 px-3 py-1.5 rounded-xl flex items-center space-x-2 shrink-0 shadow-sm font-bold text-slate-700 hover:bg-slate-50 transition"
                     >
                       {toToken?.logoURI ? (
-                        <img src={toToken.logoURI} alt={toToken.symbol} className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
+                        <img src={formatLogoUri(toToken.logoURI)} alt={toToken.symbol} className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
                       ) : (
                         <div className="w-5 h-5 bg-indigo-100 text-indigo-600 flex items-center justify-center rounded-full text-[10px] font-black">{toToken?.symbol[0]}</div>
                       )}
@@ -1134,29 +1174,133 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                 )}
               </div>
 
-              {/* The Ultimate Action Button! */}
+              {/* Conditional Action Buttons: Live Web3 vs Tatum Sandbox */}
               <div className="mt-6">
-                <button
-                  disabled={!fromToken || !toToken || !fromAmount || !toAmount || quoteError !== null || isSwapping || savedWallets.length === 0}
-                  onClick={handleExecuteSwap}
-                  className={`w-full py-4 px-6 rounded-2xl text-sm font-black text-white hover:shadow-lg hover:shadow-indigo-500/10 active:scale-[0.98] transition cursor-pointer flex items-center justify-center space-x-2 ${
-                    !fromToken || !toToken || !fromAmount || !toAmount || quoteError !== null || isSwapping || savedWallets.length === 0
-                      ? "bg-slate-200 border border-slate-150 text-slate-400 shadow-none cursor-not-allowed"
-                      : "bg-gradient-to-r from-indigo-550 to-indigo-600 bg-indigo-600 border border-indigo-400/30"
-                  }`}
-                >
-                  {isSwapping ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                      <span>Đang liên hệ Node & khai mạc smart-contract...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 text-white" />
-                      <span>Xác nhận hoán đổi giả lập (Ký Sandbox)</span>
-                    </>
-                  )}
-                </button>
+                {isConnected ? (
+                  <div className="space-y-4">
+                    {/* Live Web3 Status Banner */}
+                    <div className="p-3 bg-pink-50 border border-pink-100 rounded-2xl text-xs text-pink-900 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" />
+                        <span className="text-pink-700">Ví Web3 Kết Nối: {connectedAddress?.slice(0, 6)}...{connectedAddress?.slice(-4)}</span>
+                      </div>
+                      <span className="font-bold text-slate-600">
+                        {connectedBalance ? `${Number(formatUnits(connectedBalance.value, connectedBalance.decimals)).toFixed(4)} ${connectedBalance.symbol}` : "0 ETH"}
+                      </span>
+                    </div>
+
+                    {txError && (
+                      <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 font-semibold flex items-start gap-2">
+                        <AlertTriangle className="w-4.5 h-4.5 text-rose-500 shrink-0 mt-0.5" />
+                        <span className="break-all">{txError}</span>
+                      </div>
+                    )}
+
+                    {isApprovalNeeded ? (
+                      <button
+                        disabled={isApprovePending || !fromToken || !fromAmount || Number(fromAmount) <= 0}
+                        onClick={handleApprove}
+                        className={`w-full py-4 px-6 rounded-2xl text-sm font-black text-white hover:shadow-lg hover:shadow-pink-500/10 active:scale-[0.98] transition cursor-pointer flex items-center justify-center space-x-2 ${
+                          isApprovePending || !fromToken || !fromAmount || Number(fromAmount) <= 0
+                            ? "bg-slate-200 text-slate-400 border-slate-150 cursor-not-allowed"
+                            : "bg-gradient-to-r from-pink-500 to-pink-600 bg-pink-600 border border-pink-400/30"
+                        }`}
+                      >
+                        {isApprovePending ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                            <span>Đang Phê Duyệt {fromToken?.symbol} trên Ví...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4 text-white" />
+                            <span>Phê Duyệt (Approve) {fromToken?.symbol} cho Uniswap V2</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        disabled={isSwapPending || !fromToken || !toToken || !fromAmount || Number(fromAmount) <= 0}
+                        onClick={handleSwap}
+                        className={`w-full py-4 px-6 rounded-2xl text-sm font-black text-white hover:shadow-lg hover:shadow-indigo-500/10 active:scale-[0.98] transition cursor-pointer flex items-center justify-center space-x-2 relative overflow-hidden ${
+                          isSwapPending || !fromToken || !toToken || !fromAmount || Number(fromAmount) <= 0
+                            ? "bg-slate-200 text-slate-400 border-slate-150 cursor-not-allowed"
+                            : "bg-gradient-to-r from-pink-500 to-indigo-600 bg-pink-600 border border-pink-400/30"
+                        }`}
+                      >
+                        {isSwapPending ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                            <span>Đang thực hiện lệnh Swap trên Ví...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 text-white" />
+                            <span>Xác Nhận Hoán Đổi Thực Tế (Web3 Swap)</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {approveHash && (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] font-mono flex items-center justify-between">
+                        <span className="text-slate-500 font-bold">Mã duyệt chi (Approve Hash):</span>
+                        <a 
+                          href={`https://etherscan.io/tx/${approveHash}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-pink-600 hover:underline flex items-center gap-1 font-bold truncate max-w-[150px]"
+                        >
+                          <span>{approveHash.slice(0, 10)}...</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    )}
+
+                    {swapHash && (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] font-mono flex items-center justify-between">
+                        <span className="text-slate-500 font-bold">Mã Giao dịch (Swap Hash):</span>
+                        <a 
+                          href={`https://etherscan.io/tx/${swapHash}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-indigo-600 hover:underline flex items-center gap-1 font-bold truncate max-w-[150px]"
+                        >
+                          <span>{swapHash.slice(0, 10)}...</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    )}
+
+                    {isSwapSuccess && (
+                      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 font-bold leading-relaxed">
+                        🎉 Hoán đổi thành công thực tế trên blockchain! Giao dịch của bạn đã được gửi và đóng khối thành công.
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    disabled={!fromToken || !toToken || !fromAmount || !toAmount || quoteError !== null || isSwapping || savedWallets.length === 0}
+                    onClick={handleExecuteSwap}
+                    className={`w-full py-4 px-6 rounded-2xl text-sm font-black text-white hover:shadow-lg hover:shadow-indigo-500/10 active:scale-[0.98] transition cursor-pointer flex items-center justify-center space-x-2 ${
+                      !fromToken || !toToken || !fromAmount || !toAmount || quoteError !== null || isSwapping || savedWallets.length === 0
+                        ? "bg-slate-200 border border-slate-150 text-slate-400 shadow-none cursor-not-allowed"
+                        : "bg-gradient-to-r from-indigo-550 to-indigo-600 bg-indigo-600 border border-indigo-400/30"
+                    }`}
+                  >
+                    {isSwapping ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                        <span>Đang liên hệ Node & khai mạc smart-contract...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 text-white" />
+                        <span>Xác nhận hoán đổi giả lập (Ký Sandbox)</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
 
               {/* Success Celebration Alert Panel */}
@@ -1390,7 +1534,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                           >
                             <div className="flex items-center space-x-2.5">
                               {token.logoURI ? (
-                                <img src={token.logoURI} alt={token.symbol} className="w-6.5 h-6.5 rounded-full" referrerPolicy="no-referrer" />
+                                <img src={formatLogoUri(token.logoURI)} alt={token.symbol} className="w-6.5 h-6.5 rounded-full" referrerPolicy="no-referrer" />
                               ) : (
                                 <div className="w-6.5 h-6.5 bg-slate-100 text-slate-600 flex items-center justify-center rounded-full text-xs font-black">{token.symbol[0]}</div>
                               )}

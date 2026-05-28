@@ -1709,7 +1709,7 @@ export default function App() {
                               ...prev,
                               chain: wall.chain,
                               network: wall.network,
-                              sourceType: wall.hasXpub ? "xpub" : "mnemonic",
+                              sourceType: wall.xpub ? "xpub" : "mnemonic",
                               sourceVal: (deriveInput.sourceType === "xpub" ? wall.xpub : wall.mnemonic) || ""
                             }));
                           }
@@ -3097,7 +3097,7 @@ export default function App() {
                 coin={selectedCmcCoin} 
                 onBack={() => setSelectedCmcCoin(null)} 
                 onSelectChain={setSelectedChain}
-                onSelectTab={setActiveTab}
+                onSelectTab={(tab: any) => setActiveTab(tab)}
               />
             ) : (
               <>
