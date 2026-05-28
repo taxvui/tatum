@@ -1,3 +1,5 @@
+import { getAddressFromPublicKey } from "./tezosCrypto.js";
+
 const getTatumChainName = (chain: string): { tatumChain: string; isEVM: boolean } => {
   const chainLower = chain.toLowerCase();
   
@@ -51,7 +53,7 @@ const generateMockDerivedAddress = (chain: string, xpub: string, index: number) 
   if (chainLower === "btc" || chainLower === "bitcoin") {
     return "bc1q" + Array.from({ length: 34 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length))).join("").toLowerCase() + indexHash;
   } else if (chainLower === "xtz" || chainLower === "tezos") {
-    return "tz1" + Array.from({ length: 29 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length))).join("") + indexHash;
+    return getAddressFromPublicKey(xpub);
   } else if (chainLower === "xlm" || chainLower === "stellar") {
     return "G" + Array.from({ length: 51 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length)).toUpperCase()).join("") + indexHash.toUpperCase();
   } else if (chainLower === "xrp" || chainLower === "ripple") {

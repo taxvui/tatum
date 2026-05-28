@@ -44,6 +44,8 @@ const getApiKey = (network: "mainnet" | "testnet", customKey?: string) => {
     : (process.env.TATUM_TESTNET_KEY || "t-6a0404ac3e08a78e0ddc247a-1cf5ba65fbe3467fb1c039be");
 };
 
+import { generateTezosKeys } from "./tezosCrypto.js";
+
 const generateMockWallet = (chain: string, network: string) => {
   const words = [
     "solar", "orbit", "quantum", "gravity", "matrix", "nebula", "cipher", "plasma", 
@@ -76,8 +78,10 @@ const generateMockWallet = (chain: string, network: string) => {
     address = "addr1q" + Array.from({ length: 98 }, () => hexDigits.charAt(Math.floor(Math.random() * 16))).join("");
     xpub = "xpub6H" + Array.from({ length: 60 }, () => hexDigits.charAt(Math.floor(Math.random() * 16))).join("");
   } else if (chainLower === "xtz" || chainLower === "tezos") {
-    address = "tz1" + Array.from({ length: 33 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length))).join("");
-    xpub = "xpub6H" + Array.from({ length: 60 }, () => hexDigits.charAt(Math.floor(Math.random() * 16))).join("");
+    const tezosWallet = generateTezosKeys(mnemonic, 0);
+    address = tezosWallet.address;
+    privateKey = tezosWallet.privateKey;
+    xpub = tezosWallet.xpub;
   } else if (chainLower === "xlm" || chainLower === "stellar") {
     address = "G" + Array.from({ length: 55 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length)).toUpperCase()).join("");
     privateKey = "S" + Array.from({ length: 55 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length)).toUpperCase()).join("");

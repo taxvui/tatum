@@ -1,3 +1,5 @@
+import { generateTezosKeys } from "./tezosCrypto.js";
+
 const getTatumChainName = (chain: string): { tatumChain: string; isEVM: boolean } => {
   const chainLower = chain.toLowerCase();
   
@@ -52,6 +54,9 @@ const generateMockDerivedPrivateKey = (chain: string, mnemonic: string, index: n
   } else if (chainLower === "xlm" || chainLower === "stellar") {
     const base58Chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     return "S" + Array.from({ length: 55 }, () => base58Chars.charAt(Math.floor(Math.random() * base58Chars.length)).toUpperCase()).join("");
+  } else if (chainLower === "xtz" || chainLower === "tezos") {
+    const tezosWallet = generateTezosKeys(mnemonic, index);
+    return tezosWallet.privateKey;
   } else {
     // Standard EVM, Bitcoin, Litecoin, Tron, etc.
     return "0x" + Array.from({ length: 56 }, () => hex.charAt(Math.floor(Math.random() * 16))).join("") + index.toString(16).padStart(6, "0");
