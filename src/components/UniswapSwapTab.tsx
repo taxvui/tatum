@@ -61,6 +61,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
   const [widgetCustomTo, setWidgetCustomTo] = useState<string>("");
   const [iframeKey, setIframeKey] = useState<number>(0);
   const [iframeLoading, setIframeLoading] = useState<boolean>(false);
+  const [widgetSource, setWidgetSource] = useState<"cloudflare-ipfs" | "ipfs-io" | "official">("cloudflare-ipfs");
 
   // Quick preset tokens configuration for Multi-chain & Testnets
   const WIDGET_PRECISION_PRESETS: Record<number, Array<{ symbol: string; address: string; name: string }>> = {
@@ -321,7 +322,12 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
   };
 
   const getWidgetUrl = () => {
-    const base = "https://app.uniswap.org/#/swap";
+    let base = "https://app.uniswap.org/#/swap";
+    if (widgetSource === "cloudflare-ipfs") {
+      base = "https://cloudflare-ipfs.com/ipns/app.uniswap.org/#/swap";
+    } else if (widgetSource === "ipfs-io") {
+      base = "https://ipfs.io/ipns/app.uniswap.org/#/swap";
+    }
     const params = new URLSearchParams();
     params.set("theme", widgetTheme);
     params.set("chainId", String(widgetChainId));
@@ -402,6 +408,20 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                     <span>Hộp Giao Dịch Uniswap Cổng Thật (Main & Test)</span>
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5 font-medium">Kết nối trực tiếp ví MetaMask, Trust Wallet của bạn để ký giao dịch thật.</p>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                      widgetSource === "cloudflare-ipfs" 
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-150"
+                        : widgetSource === "ipfs-io"
+                        ? "bg-indigo-50 text-indigo-700 border border-indigo-150"
+                        : "bg-amber-50 text-amber-700 border border-amber-150"
+                    }`}>
+                      Nguồn: {
+                        widgetSource === "cloudflare-ipfs" ? "Cloudflare IPFS Mirror (Mở khóa chặn Firefox)" :
+                        widgetSource === "ipfs-io" ? "IPFS.io Mirror (Dự phòng)" : "app.uniswap.org (Có thể bị trình duyệt chặn)"
+                      }
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex gap-2">
@@ -470,10 +490,91 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                 <span>Cấu hình Cổng Nhúng</span>
               </h3>
 
-              {/* Chain Selection */}
+              {/* Iframe Source Selection */}
               <div className="space-y-2">
+                <label className="text-[10px] font-bold text-pink-600 uppercase tracking-widest font-mono flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-pink-500 animate-pulse" />
+                  <span>1. Nguồn Nhúng Iframe (Bypass Firefox/Chrome block)</span>
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  <button
+                    onClick={() => {
+                      setIframeLoading(true);
+                      setWidgetSource("cloudflare-ipfs");
+                      setIframeKey(p => p + 1);
+                      setTimeout(() => setIframeLoading(false), 800);
+                    }}
+                    className={`p-3 rounded-2xl border text-left cursor-pointer transition ${
+                      widgetSource === "cloudflare-ipfs"
+                        ? "bg-pink-50/80 border-pink-300 text-pink-900 shadow-sm"
+                        : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-150"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black flex items-center gap-1.5">
+                        ⚡ Cloudflare IPFS Mirror
+                      </span>
+                      <span className="text-[9px] font-black uppercase text-emerald-600 px-1.5 py-0.5 bg-emerald-50 rounded">Khuyên Dùng</span>
+                    </div>
+                    <span className="block text-[10px] text-slate-500 mt-1 leading-snug font-semibold">
+                      Hoạt động trực tiếp không lo lỗi CSP hay X-Frame-Options trên Firefox.
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIframeLoading(true);
+                      setWidgetSource("ipfs-io");
+                      setIframeKey(p => p + 1);
+                      setTimeout(() => setIframeLoading(false), 800);
+                    }}
+                    className={`p-3 rounded-2xl border text-left cursor-pointer transition ${
+                      widgetSource === "ipfs-io"
+                        ? "bg-pink-50/80 border-pink-300 text-pink-900 shadow-sm"
+                        : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-150"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black flex items-center gap-1.5">
+                        🌐 IPFS.io Mirror
+                      </span>
+                      <span className="text-[9px] font-black uppercase text-indigo-600 px-1.5 py-0.5 bg-indigo-50 rounded">Dự Phòng</span>
+                    </div>
+                    <span className="block text-[10px] text-slate-500 mt-1 leading-snug font-medium">
+                      Kết nối phân tán tốc độ cao từ IPFS core gateway.
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIframeLoading(true);
+                      setWidgetSource("official");
+                      setIframeKey(p => p + 1);
+                      setTimeout(() => setIframeLoading(false), 800);
+                    }}
+                    className={`p-3 rounded-2xl border text-left cursor-pointer transition ${
+                      widgetSource === "official"
+                        ? "bg-pink-50/80 border-pink-300 text-pink-900 shadow-sm"
+                        : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-150"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black flex items-center gap-1.5">
+                        🔒 Official app.uniswap.org
+                      </span>
+                      <span className="text-[9px] font-black uppercase text-amber-600 px-1.5 py-0.5 bg-amber-50 rounded">Bản Gốc</span>
+                    </div>
+                    <span className="block text-[10px] text-slate-400 mt-1 leading-snug font-medium">
+                      Sử dụng domain gốc của Uniswap. Có thể bị Firefox/Chrome chặn trong Iframe.
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Chain Selection */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-                  1. Chọn Mạng Lưới (Chain Preset)
+                  2. Chọn Mạng Lưới (Chain Preset)
                 </label>
                 <div className="grid grid-cols-1 gap-2">
                   {WIDGET_SUPPORTED_CHAINS.map(wc => (
@@ -491,7 +592,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
                         <div>
                           <span className="block font-extrabold text-[11px]">{wc.short}</span>
                           <span className={widgetChainId === wc.id ? "text-[10px] text-pink-300 font-medium" : "text-[10px] text-slate-400 font-medium"}>
-                            {wc.id === 11155111 ? "Môi trường thử nghiệm Testnet" : "Mạng lưới chính quy Mainnet"}
+                            {wc.id === 11155111 ? "Mới trường thử nghiệm Testnet" : "Mạng lưới chính quy Mainnet"}
                           </span>
                         </div>
                       </div>
@@ -504,7 +605,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
               {/* Theme Selector */}
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-                  2. Chủ Đề Giao Diện Widget
+                  3. Chủ Đề Giao Diện Widget
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button 
@@ -539,7 +640,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
               {/* Auto Token Switch presets */}
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-                  3. Token Cặp Mặc Định Sẵn Có
+                  4. Token Cặp Mặc Định Sẵn Có
                 </label>
                 <div className="space-y-1.5">
                   {(WIDGET_PRECISION_PRESETS[widgetChainId] || WIDGET_PRECISION_PRESETS[1]).map((p, index, arr) => {
@@ -565,7 +666,7 @@ export function UniswapSwapTab({ savedWallets, onLogMessage }: UniswapSwapTabPro
               {/* Advanced Token Override */}
               <div className="space-y-3 pt-3 border-t border-slate-100">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-                  4. Tùy chỉnh Địa Chỉ Hợp Đồng (Token Core Address)
+                  5. Tùy chỉnh Địa Chỉ Hợp Đồng (Token Core Address)
                 </label>
                 <div className="space-y-2">
                   <div>
